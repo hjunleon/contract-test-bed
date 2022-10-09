@@ -38,7 +38,10 @@ contract DigiDaigaku is ERC721, Ownable, EIP712, ERC2981 {
   /// @dev Emitted when suffix URI is set.
   event SuffixURISet(string _suffixURI);
 
-  constructor() ERC721("DigiDaigaku", "DIDA") EIP712("DigiDaigaku", "1") {}
+  /// @dev Emitted when ECDSA signature calculated.
+  event SigComp(bytes32 thisHash);
+
+  constructor() ERC721("DigiDaigaku", "DIDA") EIP712("DigiDaigaku", "1") {}  //https://docs.openzeppelin.com/contracts/3.x/api/drafts
 
   /// @notice Owner mint to reserve DigiDaigaku
   function mintFromOwner(uint256 _quantity, address _receiver) external onlyOwner {
@@ -63,10 +66,9 @@ contract DigiDaigaku is ERC721, Ownable, EIP712, ERC2981 {
     _safeMint(_msgSender(), _tokenIdCounter.current());
   }
 
-  /// @dev Verify signature 
-  function _verifySignature(bytes calldata _signature) internal view
-  {
-    bytes32 hash = _hashTypedDataV4(
+  /// making things simpler
+  function genSignature() public view returns (bytes32)  {
+    return _hashTypedDataV4(
       keccak256(
         abi.encode(
           keccak256(
@@ -76,11 +78,18 @@ contract DigiDaigaku is ERC721, Ownable, EIP712, ERC2981 {
         )
       )
     );
+  }
 
-    require(
-      signer == ECDSA.recover(hash, _signature),
-      "Invalid signer"
-    );
+  /// @dev Verify signature  view
+  function _verifySignature(bytes calldata _signature) internal 
+  {
+    bytes32 hash = genSignature();
+    emit SigComp(hash);
+   //hash _signature
+    // require(  
+    //   signer == ECDSA.recover(hash, _signature),
+    //   "Invalid signer"
+    // );
   }
 
   /// @dev Required to return baseTokenURI for tokenURI
