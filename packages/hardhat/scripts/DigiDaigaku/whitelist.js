@@ -70,24 +70,24 @@ Private Key: 0xdf57089febbacf7ba0bc227dafbffa9fc08a93fdc68e1e42411a14efcf23656e
 
 const allowlistedAddresses = [
     {
-        "pub":"0x70997970c51812dc3a010c7d01b50e0d17dc79c8",
-        "private":"0x59c6995e998f97a5a0044966f0945389dc9e86dae88c7a8412f4603b6b78690d"
+        "pub": "0x70997970c51812dc3a010c7d01b50e0d17dc79c8",
+        "private": "0x59c6995e998f97a5a0044966f0945389dc9e86dae88c7a8412f4603b6b78690d"
     },
     {
-        "pub":"0x3c44cdddb6a900fa2b585dd299e03d12fa4293bc",
-        "private":"0x5de4111afa1a4b94908f83103eb1f1706367c2e68ca870fc3fb9a804cdab365a"
+        "pub": "0x3c44cdddb6a900fa2b585dd299e03d12fa4293bc",
+        "private": "0x5de4111afa1a4b94908f83103eb1f1706367c2e68ca870fc3fb9a804cdab365a"
     },
     {
-        "pub":"0x90f79bf6eb2c4f870365e785982e1f101e93b906",
-        "private":"0x7c852118294e51e653712a81e05800f419141751be58f605c371e15141b007a6"
+        "pub": "0x90f79bf6eb2c4f870365e785982e1f101e93b906",
+        "private": "0x7c852118294e51e653712a81e05800f419141751be58f605c371e15141b007a6"
     },
     {
-        "pub":"0x15d34aaf54267db7d7c367839aaf71a00a2c6a65",
-        "private":"0x47e179ec197488593b187f80a00eb0da91f1b9d0b13f8733639f19c30a34926a"
+        "pub": "0x15d34aaf54267db7d7c367839aaf71a00a2c6a65",
+        "private": "0x47e179ec197488593b187f80a00eb0da91f1b9d0b13f8733639f19c30a34926a"
     },
     {
-        "pub":"0x9965507d1a55bcc2695c58ba16fb37d819b0a4dc",
-        "private":"0x8b3a350cf5c34c9194ca85829a2df0ec3153be0318b5e2d3348e872092edffba"
+        "pub": "0x9965507d1a55bcc2695c58ba16fb37d819b0a4dc",
+        "private": "0x8b3a350cf5c34c9194ca85829a2df0ec3153be0318b5e2d3348e872092edffba"
     },
 ];
 
@@ -107,8 +107,12 @@ const main = async () => {
 
     const privateKey = '0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80';
 
-    // let digiDaigaku = await ethers.getContract("DigiDaigaku", deployer);
+    let digiDaigaku = await ethers.getContract("DigiDaigaku", deployer);
 
+    const { chainId, _ } = await digiDaigaku.provider.getNetwork();
+    console.log(`chainId: ${chainId}`)
+    const contractAddress = digiDaigaku.address;
+    console.log(`contractAddress: ${contractAddress}`)
     const signer = new ethers.Wallet(privateKey);
     // console.log(`Signing address ${signer.address}`)
     // await digiDaigaku.setSigner(owner)
@@ -116,22 +120,43 @@ const main = async () => {
     for (let pubPriv of allowlistedAddresses) {
         let addr = pubPriv["pub"]
         console.log(`addr: ${addr}`)
-        let prefixMsg = ethers.utils.id("Approved(address wallet)")
-        let messageHash = ethers.utils.defaultAbiCoder.encode(["string","string"],[prefixMsg,addr])//ethers.utils.id(addr)  //Compute the keccak256 cryptographic hash of a UTF-8 string, returned as a hex string.  https://github.com/ethers-io/ethers.js/issues/718
-        console.log("Message Hash: ", messageHash);
+        // let prefixMsg = ethers.utils.id("Approved(address wallet)")
+        // let messageHash = ethers.utils.defaultAbiCoder.encode(["string", "string"], [prefixMsg, addr])//ethers.utils.id(addr)  //Compute the keccak256 cryptographic hash of a UTF-8 string, returned as a hex string.  https://github.com/ethers-io/ethers.js/issues/718
+        // console.log("Message Hash: ", messageHash);
         // Sign the hashed address
         // let messageBytes = ethers.utils.arrayify(messageHash);   // Returns a Uint8Array of a hex string, BigNumber or of an Arrayish object.
-        let signature = await signer.signMessage(messageHash);
-        console.log("Signature: ", signature);
+        // let signature = await signer.signMessage(messageHash);
+        // console.log("Signature: ", signature);
 
         // let digiDaigaku = await ethers.getContract("DigiDaigaku", addr);
         // let signature = await digiDaigaku.genSignature()
-        signature = await signer._signTypedData({
-            name: "DigiDaigaku", 
-            version:"1"
-        }, {}, messageHash);
+        const domain = {
+            name: "DigiDaigaku",
+            version: "1",
+            chainId: chainId,
+            verifyingContract: contractAddress,
+        }
+        const types = {
+            Approved: [
+                { name: "wallet", type: "address" }
+            ]
+        }
+        const val = {
+            wallet: addr
+        }
+        let signature = await signer._signTypedData(domain, types, val);
         console.log("Signature: ", signature);
-        console.log("Now verifying against contract... expected to be true")
+        // console.log("Now verifying against contract... expected to be true")
+        
+        
+        const expectedSignerAddress = deployer;
+        const recoveredAddress = ethers.utils.verifyTypedData(domain, types, val, signature);
+        console.log(recoveredAddress === expectedSignerAddress); // true
+        
+        
+        
+        
+        
         signatures.push({
             "pub": addr,
             "priv": pubPriv["private"],

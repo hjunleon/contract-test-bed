@@ -20,27 +20,27 @@ const addr_sig = [
     {
       pub: '0x70997970c51812dc3a010c7d01b50e0d17dc79c8',
       priv: '0x59c6995e998f97a5a0044966f0945389dc9e86dae88c7a8412f4603b6b78690d',
-      signature: '0x98918857764067338419281279cb44261ecc9effaad57ee284725c73f0bdf8730e8b585b4e483b95b773a784c7d17cc862d46cf8f778ca70f73965e3de2364961b'
+      signature: '0x0e8a3719f8feec70c6fd0a6b9e39b335918d35be091439789cecafa34817a99a251ea30cdc6a6513001041a11f04ff0e404cd5696f698df1fede26795c589fb91c'
     },
     {
       pub: '0x3c44cdddb6a900fa2b585dd299e03d12fa4293bc',
       priv: '0x5de4111afa1a4b94908f83103eb1f1706367c2e68ca870fc3fb9a804cdab365a',
-      signature: '0x124721aba60323724c6599d5d1e5da9fb6a552c06538311a2d1b8e1dcc6df6a3183e50c3a45faec82994f1b40d77b3b124bae793661bf9b27b30ded18282b8c91b'
+      signature: '0x559ec919bfec1cbca235531b63c2319cab8397d86675ac44d7319482fff63dcd21675961c5a9243398e64d109b244b60c7447f3d208ba76853f72df090bc843a1b'
     },
     {
       pub: '0x90f79bf6eb2c4f870365e785982e1f101e93b906',
       priv: '0x7c852118294e51e653712a81e05800f419141751be58f605c371e15141b007a6',
-      signature: '0xd6caf78afca40fe914654e2f01ac7c29f7ef42a630d9112533c0239d4f63b83552f09ca7e3c8e11c5392027653f4aad38e58e1a25f656e78731e39acad9f70eb1c'
+      signature: '0xab74f4feb2a3a7a3b00d130ae703a308c866426b250d3def24dcc01e2d5d0fc542e84d45c0af4d4d6ccee0df6012423541edf3673b41c140461441f4c85f54aa1b'
     },
     {
       pub: '0x15d34aaf54267db7d7c367839aaf71a00a2c6a65',
       priv: '0x47e179ec197488593b187f80a00eb0da91f1b9d0b13f8733639f19c30a34926a',
-      signature: '0xe7a7508d7b105a83ad2205e55c42b351b417b0e9a3b3587ff7b814fb602d703e4c3521f1758f643446bbbbe8625fd64814ef8e11b0006bd5fc2547a4fc570d171b'
+      signature: '0x42bd1ee6451bfd8611b41dcd1a2be464678ab2d204b01689b338959a45ff3c23237d6a866419fb74cee90a4d19fbd6735ac243841fca5ced5844034348cc63871b'
     },
     {
       pub: '0x9965507d1a55bcc2695c58ba16fb37d819b0a4dc',
       priv: '0x8b3a350cf5c34c9194ca85829a2df0ec3153be0318b5e2d3348e872092edffba',
-      signature: '0xe93f7b2d9964ebeb5892eea2714138c5c360a1696b7fc6313472a676bf7138802bdcc7604f0126f9e94db8cc978fc661e37006170eed0a15557becaf9e0fd69e1b'
+      signature: '0x1ef3d3f2156d288d74bc2934825e0ff137b23acf7c5d3022378292b081c71dac75cd85cb07e68dcdb3090cabd88bb6e6c02ad32d9bf68cefb73e95976d2dbc7a1b'
     }
   ]
 
@@ -63,14 +63,15 @@ const main = async () => {
     console.log(`deployer: ${deployer}`)
     
     digiDaigaku.on("SigComp",(e)=>{
-        console.log("SIG COMP")
-        console.log(e)
+        console.log(`SIG COMP: ${e}`)
     })
 
     
     digiDaigaku.on("SignerSet",(e)=>{
-        console.log("SignerSet")
-        console.log(e)
+        console.log(`SignerSet: ${e}`)
+    })
+    digiDaigaku.on("ERecovered",(e)=>{
+        console.log(`ERecovered: ${e}`)
     })
     // ethers.provider.on({
     //     address: digiDaigaku.getContract.address
@@ -91,9 +92,14 @@ const main = async () => {
 
         const signer = new ethers.Wallet(privateKey);
         console.log(`Signing address ${signer.address}`)
+
+        
+
         const digiDaigaku = await ethers.getContract("DigiDaigaku", signer.address);
         try {
-            let res = await digiDaigaku.mintPublic(x['signature'])
+            let res = await digiDaigaku.mintPublic(x['signature'])  
+            // let res = await digiDaigaku.verifySignature(x['signature'])
+            // let res = await digiDaigaku.genSignature()
             console.log(res)
         }
         catch (e) {

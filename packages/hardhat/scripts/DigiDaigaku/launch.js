@@ -31,7 +31,7 @@ const main = async () => {
 
   // 0x70997970C51812dc3A010C7d01b50e0d17dc79C8
   let addr1 = "0x70997970C51812dc3A010C7d01b50e0d17dc79C8"
-  res = await digiDaigaku.setRoyaltyInfo(addr1,10000); // 10000 basis points = 1%
+  res = await digiDaigaku.setRoyaltyInfo(addr1,200); // 10000 basis points = 100%
   console.log(res)
 
   // owner mint

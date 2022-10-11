@@ -41,7 +41,19 @@ contract DigiDaigaku is ERC721, Ownable, EIP712, ERC2981 {
   /// @dev Emitted when ECDSA signature calculated.
   event SigComp(bytes32 thisHash);
 
+  /// @dev Emitted when value recovered.
+  event ERecovered(address val);
+
   constructor() ERC721("DigiDaigaku", "DIDA") EIP712("DigiDaigaku", "1") {}  //https://docs.openzeppelin.com/contracts/3.x/api/drafts
+
+  bytes4 private constant _INTERFACE_ID_ERC2981 = 0x2a55205a;
+
+  function checkRoyalties(address _contract) public view returns (bool) {
+      (bool success) = IERC165(_contract).supportsInterface(_INTERFACE_ID_ERC2981);
+      return success;
+ }
+
+
 
   /// @notice Owner mint to reserve DigiDaigaku
   function mintFromOwner(uint256 _quantity, address _receiver) external onlyOwner {
@@ -66,9 +78,10 @@ contract DigiDaigaku is ERC721, Ownable, EIP712, ERC2981 {
     _safeMint(_msgSender(), _tokenIdCounter.current());
   }
 
-  /// making things simpler
-  function genSignature() public view returns (bytes32)  {
-    return _hashTypedDataV4(
+  /// debugging signature generation and check
+  /// https://ethereum.stackexchange.com/questions/125425/solidity-cannot-verify-ethers-js-signed-data-signtypeddata
+  function genSignature() public returns (bytes32)  {
+    bytes32 hash =  _hashTypedDataV4(
       keccak256(
         abi.encode(
           keccak256(
@@ -78,18 +91,39 @@ contract DigiDaigaku is ERC721, Ownable, EIP712, ERC2981 {
         )
       )
     );
+
+    emit SigComp(hash);
+    return hash;
   }
 
-  /// @dev Verify signature  view
-  function _verifySignature(bytes calldata _signature) internal 
+  /// @dev Verify signature  view ( I added )
+  function verifySignature(bytes calldata _signature) public  returns (address) 
   {
     bytes32 hash = genSignature();
-    emit SigComp(hash);
-   //hash _signature
-    // require(  
-    //   signer == ECDSA.recover(hash, _signature),
-    //   "Invalid signer"
-    // );
+    address recovered_val = ECDSA.recover(hash, _signature);
+    emit ERecovered(recovered_val);
+  //  hash _signature
+    return recovered_val;
+  }
+
+
+  /// @dev Verify signature  view
+  function _verifySignature(bytes calldata _signature) internal view 
+  {
+    bytes32 hash = _hashTypedDataV4(
+      keccak256(
+        abi.encode(
+          keccak256(
+              "Approved(address wallet)"
+          ),
+          _msgSender()
+        )
+      )
+    );
+    require(  
+      signer == ECDSA.recover(hash, _signature),
+      "Invalid signer"
+    );
   }
 
   /// @dev Required to return baseTokenURI for tokenURI
